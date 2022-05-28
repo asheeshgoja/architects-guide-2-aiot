@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validation_module-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: validation_module
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: validation_module
+    spec:
+
+      volumes:
+      - name: shared-messages
+        emptyDir: {}
+
+      containers:
+        - name: validation_module
+          # image: docker.io/asheeshgoja/validation_module:latest@sha256:743f225d1c66571a3100026d9d0b58dd9d84413b9d73b02903e8017391d00627
+          image: docker.35.238.247.144.nip.io:5000/validation_module:latest
+          securityContext:
+            privileged: true
+          env:
+          - name: TRAINING_DATA_URL
+            value: "https://10.0.0.30:30007/normalized_training_data/"
+
+      nodeSelector:
+        gpuAccelerator: "true"
+

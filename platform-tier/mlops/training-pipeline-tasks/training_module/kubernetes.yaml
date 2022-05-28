@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-module-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: training-module
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: training-module
+    spec:
+
+      volumes:
+      - name: shared-messages
+        emptyDir: {}
+
+      containers:
+        - name: training-module
+          # image: docker.io/asheeshgoja/training-module:latest@sha256:743f225d1c66571a3100026d9d0b58dd9d84413b9d73b02903e8017391d00627
+          image: docker.35.238.247.144.nip.io:5000/training-module:latest
+          securityContext:
+            privileged: true
+          env:
+          - name: MODEL_REGISTRY_URL
+            value: "https://10.0.0.30:30007/uploadModel"
+          - name: EPOCS
+            value: "2"
+          - name: BATCH_SIZE
+            value: "32"
+          - name: TRAINING_DATA_URL
+            value: "https://10.0.0.30:30007/normalized_training_data/"
+      nodeSelector:
+        # gpuAccelerator: "true"
+        kubernetes.io/hostname : "agentnode-nvidia-jetson"
+

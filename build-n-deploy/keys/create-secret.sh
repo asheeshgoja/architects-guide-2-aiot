@@ -1,0 +1,2 @@
+kubectl -n architectsguide2aiot delete secrets ssh-keys-secret
+kubectl -n architectsguide2aiot create secret generic ssh-keys-secret --from-file=ssh-privatekey=server.key --from-file=ssh-publickey=server.crt

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantize-module-deployment
+spec:
+  selector:
+    matchLabels:
+      app: quantize-module
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: quantize-module
+    spec:
+
+      volumes:
+      - name: shared-messages
+        emptyDir: {}
+
+      containers:
+        - name: quantize-module
+          image: docker.35.238.247.144.nip.io:5000/quantize-module:latest
+          securityContext:
+            privileged: true
+          env:
+          - name: MODEL_DOWNLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30007/full"
+          - name: MODEL_UPLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30007/uploadQuantizedModel"
+          - name: CONTROL-TOPIC
+            value: "control-message"
+          - name: KAFKA-BROKER
+            value: "35.236.22.237:32199"
+
+      nodeSelector:
+        # gpuAccelerator: "true"
+        kubernetes.io/hostname : "agentnode-nvidia-jetson"
+

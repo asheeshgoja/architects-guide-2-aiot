@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell-demo
+spec:
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+  containers:
+  - name: model-registry
+    image: docker.io/asheeshgoja/model-registry:latest@sha256:d5e6b73b58f0314dbe46c80eadd2bf7a6f99d8b59e28f740d6d09a37a1e1f095
+    # image: docker.35.238.247.144.nip.io:5000/model-registry:latest
+    # volumeMounts:
+    # - name: shared-data
+    #   mountPath: /usr/share/nginx/html
+  nodeName: agentnode-raspi1
+  hostNetwork: true
+  dnsPolicy: Default
+
+# http://model-registry-service.architectsguide2aiot.svc.cluster.local:30007

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: protocol-bridge-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: protocol-bridge
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: protocol-bridge
+    spec:
+      containers:
+        - name: protocol-bridge
+          image: docker.35.238.247.144.nip.io:5000/protocol_bridge:latest
+          # image: docker.io/asheeshgoja/edge-tpu-inference-engine:latest@sha256:1d5cf33cf6a2437f4867a8ae479547f4db16fdea1c1d75cb1185711ad8da538c
+          # securityContext:
+            # privileged: true
+          env:
+          - name: MQTT-BROKER
+            value: "tcp://10.0.0.30:30005"
+          - name: MQTT-ID
+            value: "architectsguide2aiot_mqtt-id"
+          - name: DATA-TOPIC
+            value: "shaded-pole-motor-sensor_data"
+          - name: CONTROL-TOPIC
+            value: "control-message"
+          - name: KAFKA-BROKER
+            value: "35.236.22.237:32199"
+
+
+      nodeName: agentnode-raspi1
+
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: protocol-bridge-service
+# spec:
+#   type: NodePort
+#   selector:
+#     app: protocol-bridge
+#   ports:
+#     - protocol: TCP
+#       port: 8080
+#       targetPort: 8080
+#       nodePort: 30007
+
+# protocol-bridge-service.architectsguide2aiot.svc.cluster.local

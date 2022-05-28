@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: extract-module-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: extract-module
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: extract-module
+    spec:
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: ssh-keys-secret
+
+      containers:
+        - name: extract-module
+          # image: docker.io/asheeshgoja/extract_module:latest@sha256:fa506a4552fe1c5bd8832d8516c3164fefedbb42a41e30d1e037cfe9cb8b222a
+          image: docker.35.238.247.144.nip.io:5000/extract_module:latest
+          # securityContext:
+          #   privileged: true
+          env:
+            - name: NORMALIZED_DATA_UPLOAD_REGISTRY_URL
+              value: "https://10.0.0.30:30007/uploadNormalizedData"
+            - name: GCP_BUCKET
+              value: "architectsguide2aiot-aiot-mlops-demo"
+            - name: RAW_TRAINING_DATA_DOWNLOAD_REGISTRY_URL
+              value: "https://10.0.0.30:30008/"
+            - name: CONTROL-TOPIC
+              value: "control-message"
+            - name: KAFKA-BROKER
+              value: "35.236.22.237:32199"
+          volumeMounts:
+            - name: secret-volume
+              mountPath: /keys               
+
+      nodeSelector:
+        # kubernetes.io/hostname : "agentnode-raspi1"
+        kubernetes.io/hostname: "agentnode-nvidia-jetson"
+        # kubernetes.io/hostname : "kubecon-aiot-control-node"

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coral-edge-tpu-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: coral-edge-tpu
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: coral-edge-tpu
+    spec:
+
+      volumes:
+      - name: shared-messages
+        emptyDir: {}
+
+      containers:
+        - name: edge-tpu-inference-engine
+          # image: docker.io/asheeshgoja/edge-tpu-inference-engine:latest@sha256:eb6284386ca04440ab268574ccdb9142de80dcf6f03ad743a0a4728375bb189d
+          image: docker.35.238.247.144.nip.io:5000/edge-tpu-inference-engine:latest
+          securityContext:
+            privileged: true
+          ports:
+          - containerPort: 9898
+          env:
+          - name: STREAM_GRP_ID
+            value: work-load-B
+          - name: SIDECAR_PORT
+            value: "9898"
+          - name: MODEL_REGISTRY_URL
+            value : "https://10.0.0.30:30007/quantized"
+          # volumeMounts:
+          # - name: shared-messages
+          #   mountPath: /share_folder
+
+        - name: golang-api-sidecar
+          image: docker.35.238.247.144.nip.io:5000/golang-api-sidecar:latest
+          ports:
+          - containerPort: 9898
+          securityContext:
+            privileged: true
+          env:
+          - name: STREAM_GRP_ID
+            value: "work-load-A"
+          - name: PORT
+            value: "9898"
+          - name: TOPIC
+            value: "shaded-pole-motor-sensor_data"
+          - name: KAFKA-BROKER
+            value: "35.236.22.237:32199"
+          # volumeMounts:
+          # - name: shared-messages
+          #   mountPath: /share_folder_2
+          
+      nodeSelector:
+        tpuAccelerator: "true"
+        # kubernetes.io/hostname : "agentnode-coral-tpu1"
+

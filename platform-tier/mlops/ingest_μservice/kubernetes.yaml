@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingest-microservice
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: ingest-microservice
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: ingest-microservice
+    spec:
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: ssh-keys-secret
+
+      containers:
+        - name: ingest-microservice
+          image: docker.35.238.247.144.nip.io:5000/ingest_service:latest
+          env:
+            - name: TRAINING_DATA_UPLOAD_REGISTRY_URL
+              value: "https://10.0.0.30:30008/upload"
+            - name: GCP_BUCKET
+              value: "architectsguide2aiot-aiot-mlops-demo"
+            - name: MAX_ROWS
+              value: "10"
+            - name: DATA-TOPIC
+              value: "shaded-pole-motor-sensor_data"
+            - name: CONTROL-TOPIC
+              value: "control-message"
+            - name: KAFKA-BROKER
+              value: "35.236.22.237:32199"
+          volumeMounts:
+            - name: secret-volume
+              mountPath: /keys                
+
+      nodeSelector:
+        kubernetes.io/hostname: "agentnode-raspi1"
+        # kubernetes.io/hostname : "agentnode-nvidia-jetson"
+        # kubernetes.io/hostname : "kubecon-aiot-control-node"

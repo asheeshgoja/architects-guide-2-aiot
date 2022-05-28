@@ -1,0 +1,161 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: kubecon-aiotdemo-dag-
+spec:
+  entrypoint: kubecon-aiotdemo-dag
+  templates:
+    - name: kubecon-aiotdemo-dag
+      dag:
+        tasks:
+          - name: extract
+            template: extract-template
+            arguments:
+              parameters:
+                - name: message
+                  value: ""
+          - name: detect-drift
+            dependencies: [extract]
+            template: detect-drift-template
+            arguments:
+              parameters:
+                - name: message
+                  value: ""
+          - name: train
+            dependencies: [detect-drift, extract]
+            template: train-template
+            arguments:
+              parameters:
+                - name: message
+                  value: ""
+          - name: quantize
+            dependencies: [train]
+            template: quantize-template
+            arguments:
+              parameters:
+                - name: message
+                  value: ""
+          # - name: infer-tpu1
+          #   dependencies: [quantize]
+          #   template: infer-tpu1-template
+          #   arguments:
+          #     parameters:
+          #       - name: message
+          #         value: ""
+
+    - name: extract-template
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: docker.35.238.247.144.nip.io:5000/extract_module:latest
+        securityContext:
+          privileged: true
+        env:
+          - name: NORMALIZED_DATA_UPLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30007/uploadNormalizedData"
+          - name: GCP_BUCKET
+            value: "architectsguide2aiot-aiot-mlops-demo"
+          - name: RAW_TRAINING_DATA_DOWNLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30008/"   
+          - name: CONTROL-TOPIC
+            value: "control-message"
+          - name: KAFKA-BROKER
+            value: "35.236.22.237:32199"    
+        volumeMounts:
+          - name: secret-volume
+            mountPath: /keys              
+      nodeSelector:
+        kubernetes.io/hostname: "agentnode-raspi1"
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: ssh-keys-secret        
+
+    - name: detect-drift-template
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: docker.35.238.247.144.nip.io:5000/validation_module:latest
+        env:
+          - name: TRAINING_DATA_URL
+            value: "https://73.252.176.163:30007/normalized_training_data/"
+      nodeSelector:
+        kubernetes.io/hostname: "kubecon-aiot-control-node"
+
+    - name: train-template
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: docker.35.238.247.144.nip.io:5000/training-module:latest
+        env:
+          - name: MODEL_REGISTRY_URL
+            value: "https://10.0.0.30:30007/uploadModel"
+          - name: EPOCS
+            value: "2"
+          - name: BATCH_SIZE
+            value: "32"
+          - name: TRAINING_DATA_URL
+            value: "https://10.0.0.30:30007/normalized_training_data/"
+      nodeSelector:
+        kubernetes.io/hostname: "agentnode-nvidia-jetson"
+
+    - name: quantize-template
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: docker.35.238.247.144.nip.io:5000/quantize-module:latest
+        securityContext:
+          privileged: true
+        env:
+          - name: MODEL_DOWNLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30007/full"
+          - name: MODEL_UPLOAD_REGISTRY_URL
+            value: "https://10.0.0.30:30007/uploadQuantizedModel"
+          - name: CONTROL-TOPIC
+            value: "control-message"
+          - name: KAFKA-BROKER
+            value: "35.236.22.237:32199"
+      nodeSelector:
+        kubernetes.io/hostname: "agentnode-nvidia-jetson"
+
+    - name: infer-tpu1-template
+      inputs:
+        parameters:
+          - name: message
+      containerSet:
+        containers:
+          - name: edge-tpu-inference-engine
+            image: docker.35.238.247.144.nip.io:5000/edge-tpu-inference-engine:latest
+            securityContext:
+              privileged: true
+            ports:
+              - containerPort: 9898
+            env:
+              - name: STREAM_GRP_ID
+                value: work-load-B
+              - name: SIDECAR_PORT
+                value: "9898"
+              - name: MODEL_REGISTRY_URL
+                value: http://35.236.22.237:30007/quantized
+          - name: streaming-api-side
+            image: docker.35.238.247.144.nip.io:5000/go_test_consumer_small:latest
+            ports:
+              - containerPort: 9898
+            securityContext:
+              privileged: true
+            env:
+              - name: STREAM_GRP_ID
+                value: "work-load-A"
+              - name: PORT
+                value: "9898"
+              - name: TOPIC
+                value: "shaded-pole-motor-sensor_data"
+              - name: KAFKA-BROKER
+                value: "35.236.22.237:32199"
+      nodeSelector:
+        # tpuAccelerator: "true"
+        kubernetes.io/hostname: "agentnode-coral-tpu2"

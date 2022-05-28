@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: extract-module-deployment
+  # namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      app: extract-module
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: extract-module
+    spec:
+
+      volumes:
+      - name: shared-messages
+        emptyDir: {}
+
+      containers:
+        - name: extract-module
+          image: docker.io/asheeshgoja/extract_module:latest@sha256:fa506a4552fe1c5bd8832d8516c3164fefedbb42a41e30d1e037cfe9cb8b222a
+          # image: docker.35.238.247.144.nip.io:5000/extract_module:latest
+          # securityContext:
+          #   privileged: true
+          env:
+          - name: TRAINING_DATA_UPLOAD_REGISTRY_URL
+            value: "http://10.0.0.31:30007/uploadTrainingData"
+          - name: GCP_BUCKET
+            value: "architectsguide2aiot-aiot-mlops-demo"
+
+      nodeSelector:
+        # kubernetes.io/hostname : "agentnode-raspi1"
+        kubernetes.io/hostname : "agentnode-nvidia-jetson"
+        # kubernetes.io/hostname : "kubecon-aiot-control-node"
+

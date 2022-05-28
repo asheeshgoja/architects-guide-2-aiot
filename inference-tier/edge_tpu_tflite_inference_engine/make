@@ -1,0 +1,9 @@
+#docker build -t edge-tpu-inference-engine -f Dockerfile .
+#docker tag edge-tpu-inference-engine:latest docker.35.238.247.144.nip.io:5000/edge-tpu-inference-engine:latest
+#docker push docker.35.238.247.144.nip.io:5000/edge-tpu-inference-engine:latest
+
+
+docker buildx build -t asheeshgoja/edge-tpu-inference-engine:latest --platform linux/arm64 --push  .
+
+
+
