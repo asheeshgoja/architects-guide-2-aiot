@@ -16,7 +16,7 @@ const char *dataTopic = "shaded-pole-motor-sensor_data";
 const char *commandTopic = "control-message";
 
 //Model OTA URL
-const char *modelRegistry = "http://10.0.0.30:30007/quantized/";
+const char *modelRegistry = "https://10.0.0.30:30007/quantized/";
 
 // Device Activation URL
-const char *deviceRegistry = "http://10.0.0.30:30006/confirmActivation";
+const char *deviceRegistry = "https://10.0.0.30:30006/confirmActivation";
