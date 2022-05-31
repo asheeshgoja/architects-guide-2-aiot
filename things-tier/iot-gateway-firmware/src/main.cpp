@@ -12,9 +12,9 @@
 #include "servo_module.h"
 #include "aggregation.h"
 #include "activation_module.h"
-#include "configuration_local.h"
+// #include "configuration_local.h"
 
-// #include "configuration.h"
+#include "configuration.h"
 
 const int TMP_PIN = 36;
 const int VIBRATION_PIN = 39;
